@@ -62,14 +62,16 @@ c_string strParser(c_string string, size_t* countStr)
         if (*string == '\n')
         {
         *rawCode++ = '\0';
+        ++len;
         ++(*countStr);
         ++string;
         }
 
         *rawCode++ = *string++;
+        ++len;
     }
 
-    return rawCode;
+    return rawCode - len;
 }
 
 c_string doAssembler(int* stringsCount, c_string dir)
@@ -95,5 +97,5 @@ c_string doAssembler(int* stringsCount, c_string dir)
 
 
 
-    return assemblerStr;
+    return rawCodeAsm;
 }

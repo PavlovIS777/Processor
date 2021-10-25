@@ -1,5 +1,5 @@
-#ifndef CLI_H
-#define CLI_H
+#ifndef ASSEMBLING_H
+#define ASSEMBLING_H
 
 #include "Types.h"  
 
@@ -14,4 +14,4 @@ void* safeCalloc(size_t count, size_t size);
 size_t makeHash(const char* str, size_t len);
 
 c_string mkInputDir (c_string filename);
-#endif // !CLI_H
+#endif // !ASSEMBLING_H
