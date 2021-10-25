@@ -1,0 +1,3 @@
+PUSH 10
+POP [ax+2]
+HLT
