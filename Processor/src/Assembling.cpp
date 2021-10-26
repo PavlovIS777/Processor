@@ -1,4 +1,6 @@
 #include "Assembling.h"
+#include "ProcessorCompilerCfg.h"
+#include "Lexer.h"
 #include <string.h>
 #include <stdlib.h>
 #include <assert.h>
@@ -7,23 +9,6 @@
 #include <inttypes.h>
 #include <unistd.h>
 
-size_t makeHash(const char* str, size_t len) 
-{
-    size_t hash = 0;
-    for (size_t it = 0; it < len; str++, it++) 
-    {
-        hash += (unsigned char)(*str);
-        hash += (hash << 20);
-        hash ^= (hash >> 12);
-    }
-
-    hash += (hash << 6);
-    hash ^= (hash >> 22);
-    hash += (hash << 29);
-
-    return hash;
-}
-
 c_string mkInputDir (c_string filename)
 {
     c_string dir = (c_string)safeCalloc(20, sizeof(char));
@@ -31,7 +16,6 @@ c_string mkInputDir (c_string filename)
     strcat(dir, filename);
     return dir;
 }
-
 
 void* safeCalloc(size_t count, size_t size)
 {
@@ -46,42 +30,53 @@ void* safeCalloc(size_t count, size_t size)
     }
 }
 
-c_string strParser(c_string string, size_t* countStr)
+c_string strParser(c_string string, int* countStr)
 {
-    char* symbol    = 0;
-    c_string rawCode = (c_string)safeCalloc(strlen(string), sizeof(char));
-    int len = 0;
-    while (*string)
+    c_string rawCode = (c_string)safeCalloc(strlen(string) + 10, sizeof(char));
+    int len = strlen(string);
+    int currentLen = 0;
+    for (int i = 0, j = 0; i < len; ++i)
     {
-        if (*string == '#')
+        if (string[i] == '#')
         {
-            while(*string != '\n'? ++string : 0);
-            *rawCode++ = '#';
-            ++len;
-        }
-        if (*string == '\n')
-        {
-        *rawCode++ = '\0';
-        ++len;
-        ++(*countStr);
-        ++string;
+            if (currentLen == 0)
+                while(i < len? string[++i] != '\n' : 0);
+            else
+            {
+                while(i < len? string[++i] != '\n' : 0);
+                rawCode[j++] = '\0';
+                currentLen = 0;
+                ++(*countStr);
+            }
+            continue;
         }
 
-        *rawCode++ = *string++;
-        ++len;
+        if (string[i] == '\n')
+        {
+            rawCode[j++] = '\0';
+            currentLen = 0;
+            ++(*countStr);
+        }
+        else
+        {
+            rawCode[j++] = string[i];
+            ++currentLen;
+        }
     }
-
-    return rawCode - len;
+    if (string[len] != '\n' && currentLen != 0)
+        ++(*countStr);
+    return rawCode;
 }
 
-c_string doAssembler(int* stringsCount, c_string dir)
+c_string doAssembler(c_string dir)
 {
     FILE* assemblerInput = fopen(dir, "rb");
 
     if (assemblerInput == nullptr)
     {
-        printf("Can't open input file");
-        assert(assemblerInput);
+        assemblerInput = fopen("input.bin", "rb");
+        // printf("Can't open input file");
+        // assert(assemblerInput);
     }
 
     fseek(assemblerInput, 0, SEEK_END);
@@ -92,10 +87,80 @@ c_string doAssembler(int* stringsCount, c_string dir)
 
     fread(assemblerStr, sizeof(char), bytes, assemblerInput);
     
-    size_t strCount;
+    int strCount = 0;
     c_string rawCodeAsm = strParser(assemblerStr, &strCount);
 
+    c_string compiledFile = compiler(rawCodeAsm, strCount);
+    
+    return compiledFile;
+}
 
+c_string compiler (c_string rawCode, int cmdCount)
+{
+    int rawLen = strlen(rawCode);
+    c_string compiledStr = (c_string)safeCalloc(rawLen, sizeof(char));
+    int CCL = 0; //current compiled len
+    c_string cmd = nullptr;
 
-    return rawCodeAsm;
+    while (cmdCount--)
+    {
+        if (CCL + 10 > CCL)
+        {
+            rawLen *= 2;
+            compiledStr = (c_string)realloc(compiledStr, rawLen);
+            assert(compiledStr);
+        }
+
+        cmd = strchr(rawCode, ' ');
+        int cmdIdLen = cmd - rawCode;
+        size_t hashCmd = makeHash(rawCode, cmdIdLen);
+
+        switch (hashCmd)
+        {
+        case PUSH:
+            {
+            int num = 0;
+            int bracket = findBrackets(&cmd);
+            int reg = findRegister(&cmd);
+            int sign = findSign(&cmd);
+            //printf("reg: %d\nsign: %d\nbrack: %d\n", reg, sign, bracket);
+            
+            skipSpaces(&cmd);
+            int scanned = sscanf(cmd, "%d", &num);
+            if (!scanned)
+            {
+                if (sign)
+                    abort();
+                if (!reg)
+                    abort();
+            }
+            num *= sign;
+
+            compiledStr[CCL++] = 1;
+            compiledStr[CCL++] = reg;
+            compiledStr[CCL++] = bracket;
+            memcpy(&compiledStr[CCL], &num, sizeof(num));
+            CCL += 4;
+            break;
+            }
+        case POP:
+            {
+                int num = 0;
+                int bracket = findBrackets(&cmd);
+                int reg = findRegister(&cmd);
+                int sign = findSign(&cmd);
+                
+                break;
+            }
+        default:
+            break;
+        }
+
+        rawCode += strlen(rawCode) + 1;
+    }
+
+    FILE* compiledFile = fopen("output.bin", "wb+");
+    fwrite(compiledStr, sizeof(char), CCL, compiledFile);
+    printf("%s", compiledStr);
+    return compiledStr;
 }
