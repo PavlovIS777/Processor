@@ -1,5 +1,8 @@
+abcd:
 PUSH 100#SDASD
-PUSH [ax-2]
+PUSH [ax--2]
 PUSH ax
+POP [bx+2]
 PUSH ax+3#QW312
+POP ax
 #DAD

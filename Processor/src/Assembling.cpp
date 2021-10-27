@@ -99,12 +99,14 @@ c_string compiler (c_string rawCode, int cmdCount)
 {
     int rawLen = strlen(rawCode);
     c_string compiledStr = (c_string)safeCalloc(rawLen, sizeof(char));
-    int CCL = 0; //current compiled len
+    int ip = 0; //instraction pointer
     c_string cmd = nullptr;
 
+    Labels labels = {0, 100, (label*)safeCalloc(100, sizeof(label))};
+    Marks marks = {0, 100, (label*)safeCalloc(100, sizeof(label))};
     while (cmdCount--)
     {
-        if (CCL + 10 > CCL)
+        if (ip + 10 > rawLen)
         {
             rawLen *= 2;
             compiledStr = (c_string)realloc(compiledStr, rawLen);
@@ -112,8 +114,13 @@ c_string compiler (c_string rawCode, int cmdCount)
         }
 
         cmd = strchr(rawCode, ' ');
-        int cmdIdLen = cmd - rawCode;
-        size_t hashCmd = makeHash(rawCode, cmdIdLen);
+        size_t hashCmd = 0;
+        int cmdIdLen = -1;
+        if (cmd != nullptr)
+        {
+            cmdIdLen = cmd - rawCode;
+            hashCmd = makeHash(rawCode, cmdIdLen);
+        }
 
         switch (hashCmd)
         {
@@ -126,7 +133,7 @@ c_string compiler (c_string rawCode, int cmdCount)
             //printf("reg: %d\nsign: %d\nbrack: %d\n", reg, sign, bracket);
             
             skipSpaces(&cmd);
-            int scanned = sscanf(cmd, "%d", &num);
+            int scanned = sscanf(cmd, "%d", &num) + 1;
             if (!scanned)
             {
                 if (sign)
@@ -134,13 +141,13 @@ c_string compiler (c_string rawCode, int cmdCount)
                 if (!reg)
                     abort();
             }
-            num *= sign;
+            num = bracket? num*sign : num;
 
-            compiledStr[CCL++] = 1;
-            compiledStr[CCL++] = reg;
-            compiledStr[CCL++] = bracket;
-            memcpy(&compiledStr[CCL], &num, sizeof(num));
-            CCL += 4;
+            compiledStr[ip++] = 1;
+            compiledStr[ip++] = reg;
+            compiledStr[ip++] = bracket;
+            memcpy(&compiledStr[ip], &num, sizeof(num));
+            ip += 4;
             break;
             }
         case POP:
@@ -149,18 +156,57 @@ c_string compiler (c_string rawCode, int cmdCount)
                 int bracket = findBrackets(&cmd);
                 int reg = findRegister(&cmd);
                 int sign = findSign(&cmd);
-                
+
+                skipSpaces(&cmd);
+                int scanned = sscanf(cmd, "%d", &num) + 1;
+
+                if (!reg && scanned)    {abort();}
+                if (reg && scanned && !bracket) {abort();}
+
+                compiledStr[ip++] = 2;
+                compiledStr[ip++] = reg;
+                compiledStr[ip++] = bracket;
+                memcpy(&compiledStr[ip], &num, sizeof(num));
+                ip += 4;
                 break;
             }
+        case ADD:
+            {
+                compiledStr[ip++] = 3;
+            }
+        case SUB:
+            {
+                compiledStr[ip++] = 4;
+            }
+        case MUL:
+            {
+                compiledStr[ip++] = 5;
+            }
+        case JMP:
+            {
+                skipSpaces(&cmd);
+                marks.labels[marks.marksCount++] = {makeHash(cmd, cmd - strchr(cmd, ' ')), ip};
+            }
         default:
+            {
+            c_string labelStr;
+            if ((labelStr = strtok(rawCode, ":")) != nullptr)
+            {
+                labels.labels[labels.labelsCount++] = {makeHash(labelStr, strlen(labelStr)), ip};
+            }
+            else
+            {
+                assert(0 && "Wrong label");
+            }
             break;
+            }
         }
 
         rawCode += strlen(rawCode) + 1;
     }
 
     FILE* compiledFile = fopen("output.bin", "wb+");
-    fwrite(compiledStr, sizeof(char), CCL, compiledFile);
+    fwrite(compiledStr, sizeof(char), ip, compiledFile);
     printf("%s", compiledStr);
     return compiledStr;
 }
