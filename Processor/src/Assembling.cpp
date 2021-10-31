@@ -35,6 +35,7 @@ c_string strParser(c_string string, int* countStr)
     c_string rawCode = (c_string)safeCalloc(strlen(string) + 10, sizeof(char));
     int len = strlen(string);
     int currentLen = 0;
+    
     for (int i = 0, j = 0; i < len; ++i)
     {
         if (string[i] == '#')
@@ -57,6 +58,8 @@ c_string strParser(c_string string, int* countStr)
             currentLen = 0;
             ++(*countStr);
         }
+        else if (currentLen == 0 && string[i] == ' ')
+            continue;
         else
         {
             rawCode[j++] = string[i];
@@ -120,6 +123,7 @@ c_string compiler (c_string rawCode, int cmdCount)
         cmd = strchr(rawCode, ' ') != nullptr? strchr(rawCode, ' ') : rawCode + strlen(rawCode);
         size_t hashCmd = 0;
         int cmdIdLen = -1;
+        
         if (cmd != nullptr)
         {
             cmdIdLen = cmd - rawCode;
@@ -137,13 +141,15 @@ c_string compiler (c_string rawCode, int cmdCount)
             //printf("reg: %d\nsign: %d\nbrack: %d\n", reg, sign, bracket);
             
             skipSpaces(&cmd);
-            int scanned = sscanf(cmd, "%d", &num) + 1;
-            if (!scanned)
+            int scanned = findNum(&cmd, &num);
+            
+            
+
+
+            if (scanned == 0)
             {
-                if (sign)
-                    abort();
-                if (!reg)
-                    abort();
+                if (sign) {assert(0 && "NO NUMBER VALUE FOR PUSH, BUT SIGN EXIST");}
+                if (!reg) {assert(0 && "NO INPUT VALUE FOR PUSH");}
             }
             num = bracket? num*sign : num;
 
@@ -159,12 +165,13 @@ c_string compiler (c_string rawCode, int cmdCount)
                 int num = 0;
                 int bracket = findBrackets(&cmd);
                 int reg = findRegister(&cmd);
+                int sign = findSign(&cmd);
 
-                skipSpaces(&cmd);
-                int scanned = sscanf(cmd, "%d", &num) + 1;
-
-                if (!reg && scanned)    {abort();}
-                if (reg && scanned && !bracket) {abort();}
+                int scanned = findNum(&cmd, &num);
+                num = bracket? num*sign : num;
+                
+                if (!reg && scanned)            {assert(0 && "POPING :^) TO NUMBER NOR ALLOWED");}
+                if (reg && scanned && !bracket) {assert(0 && "POPING :^) TO NUMBER NOR ALLOWED");}
 
                 compiledStr[ip++] = 2;
                 compiledStr[ip++] = reg;
@@ -226,12 +233,20 @@ c_string compiler (c_string rawCode, int cmdCount)
             break;
             }
         }
+
+        cmd = strchr(cmd, ']') != nullptr? strchr(cmd, ']') + 1 : cmd;
+        skipSpaces(&cmd);
+        if(*cmd != '\0') {assert(0 && "WRONG LEXEM");}
+
         rawCode += strlen(rawCode) + 1;
     }
     makeJMP(compiledStr, &marks, &labels);
     
     FILE* compiledFile = fopen("output.bin", "wb+");
     fwrite(compiledStr, sizeof(char), ip, compiledFile);
-    printf("%s", compiledStr);
-    return compiledStr;
 }
+
+
+
+
+

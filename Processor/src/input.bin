@@ -1,18 +1,3 @@
-abcd:
-    PUSH 100#SDASD
-    PUSH [ax--2]
-JMP abcd
-JGE mem
-POP ax
-PUSH [bx]
-mem:
-    POP
-    PUSH [dx+3]
-#DAD
-MUL
-ADD
-SUB
-PUSH 13
-JMP LOH
-HLT
-POP
+POP [ax+3]          
+PUSH 10        
+MUL      

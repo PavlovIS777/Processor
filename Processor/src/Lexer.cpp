@@ -1,4 +1,7 @@
 #include "Lexer.h"
+#include "assert.h"
+#include <unistd.h>
+#include <stdio.h>
 
 int findBrackets (c_string* args)
 {
@@ -6,19 +9,21 @@ int findBrackets (c_string* args)
     if (strchr(*args, '[') == nullptr && strchr(*args, ']') == nullptr)
         return 0;
     skipSpaces(args);
+
     int bracketsCount = 0;
+    int bracketsSeq = 0;
     int len = strlen(*args);
 
-    for (int i = 0; i < len && bracketsCount >= 0 && bracketsCount < 2; ++i)
+    for (int i = 0; i < len && bracketsSeq >= 0 && bracketsCount <= 2; ++i)
     {
-        if ((*args)[i] == '[')
-            ++bracketsCount;
-        else if ((*args)[i] == ']')
-            --bracketsCount;
+        if ((*args)[i] == '['? ++bracketsCount : 0)
+            ++bracketsSeq;
+        else if ((*args)[i] == ']'? ++bracketsCount : 0)
+            --bracketsSeq;
     }
+    if (bracketsSeq != 0 || bracketsCount != 2)
+        assert(0 && "BRACKETS ERROR");
 
-    if (bracketsCount < 0 || bracketsCount >= 1)
-        return -1;
     *args = strchr(*args, '[') + 1;
     return 1;
 }
@@ -90,6 +95,30 @@ int findSign(c_string* args)
     }
     else return 0;
 }
+
+// c_string findLexemEnd(c_string cmd, int scanned, int bracket, int reg)
+// {
+//     if(bracket)
+//         return strchr(cmd, ']');
+//     if (scanned)
+//     {
+//         while(*cmd != ' ') {cmd++;}
+//         return cmd;
+//     }
+//     if (reg)
+//         return cmd;
+        
+// }
+
+int findNum(c_string* args, int* num)
+{
+    skipSpaces(args);
+    int scanned = sscanf(*args, "%d", num);
+    if (scanned)
+        while (**args && **args >= '0' && **args <= '9') {++*args;}
+    return scanned;
+}
+
 
 void makeMark(int* ip, c_string compiledStr, c_string cmd, Marks* marks, char cmdId)
 {

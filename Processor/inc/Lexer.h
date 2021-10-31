@@ -14,6 +14,8 @@ int findRegister (c_string* args);
 
 int findSign(c_string* args);
 
+int findNum(c_string* args, int* num);
+
 void makeMark(int* ip, c_string compiledStr, c_string cmd, Marks* marks, char cmdId);
 
 void makeJMP (c_string compiledStr, Marks* marks, Labels* labels);

@@ -3,8 +3,6 @@
 
 #include "Types.h"  
 
-#define MAXPROCESSORLEN 32768
-
 c_string doAssembler(c_string dir);
 
 c_string strParser(c_string string, int* countStr);
