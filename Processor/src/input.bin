@@ -1,8 +1,18 @@
 abcd:
-PUSH 100#SDASD
-PUSH [ax--2]
-PUSH ax
-POP [bx+2]
-PUSH ax+3#QW312
+    PUSH 100#SDASD
+    PUSH [ax--2]
+JMP abcd
+JGE mem
 POP ax
+PUSH [bx]
+mem:
+    POP
+    PUSH [dx+3]
 #DAD
+MUL
+ADD
+SUB
+PUSH 13
+JMP LOH
+HLT
+POP

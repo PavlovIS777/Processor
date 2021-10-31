@@ -1,5 +1,5 @@
 #include "Lexer.h"
-#include "ProcessorCompilerCfg.h"
+
 int findBrackets (c_string* args)
 {
     skipSpaces(args);
@@ -40,10 +40,12 @@ size_t makeHash(const char* str, size_t len)
     return hash;
 }
 
-
-void skipSpaces (c_string* args)
+int skipSpaces (c_string* args)
 {
-    while (**args == ' '? ++(*args) : 0);
+    int spaces = 0;
+    while (**args == ' '? ++(*args) : 0)
+        spaces++;
+    return spaces;
 }
 
 
@@ -88,3 +90,31 @@ int findSign(c_string* args)
     }
     else return 0;
 }
+
+void makeMark(int* ip, c_string compiledStr, c_string cmd, Marks* marks, char cmdId)
+{
+    skipSpaces(&cmd);
+    int labelLen = strlen(cmd);
+    marks->labels[marks->marksCount++] = {makeHash(cmd, labelLen), (*ip)};
+    compiledStr[(*ip)++] = cmdId;
+    int defaultValue = -1;
+    memcpy(&compiledStr[*ip], &defaultValue, sizeof(int));
+    (*ip) += 4;
+}
+
+void makeJMP (c_string compiledStr, Marks* marks, Labels* labels)
+{
+    for (int i = 0; i < marks->marksCount; ++i)
+    {
+        for (int j = 0; j < labels->labelsCount; ++j)
+        {
+            if (marks->labels[i].hash == labels->labels[j].hash)
+            {
+                memcpy(&compiledStr[marks->labels[i].ip + 1], &labels->labels[j].ip, 4);
+                break;
+            }
+        }
+    }
+}
+
+

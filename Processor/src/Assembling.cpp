@@ -112,8 +112,12 @@ c_string compiler (c_string rawCode, int cmdCount)
             compiledStr = (c_string)realloc(compiledStr, rawLen);
             assert(compiledStr);
         }
+        skipSpaces(&rawCode);
 
-        cmd = strchr(rawCode, ' ');
+        if (makeHash(rawCode, 3) == HLT)
+            break;
+        
+        cmd = strchr(rawCode, ' ') != nullptr? strchr(rawCode, ' ') : rawCode + strlen(rawCode);
         size_t hashCmd = 0;
         int cmdIdLen = -1;
         if (cmd != nullptr)
@@ -155,7 +159,6 @@ c_string compiler (c_string rawCode, int cmdCount)
                 int num = 0;
                 int bracket = findBrackets(&cmd);
                 int reg = findRegister(&cmd);
-                int sign = findSign(&cmd);
 
                 skipSpaces(&cmd);
                 int scanned = sscanf(cmd, "%d", &num) + 1;
@@ -173,23 +176,44 @@ c_string compiler (c_string rawCode, int cmdCount)
         case ADD:
             {
                 compiledStr[ip++] = 3;
+                break;
             }
         case SUB:
             {
                 compiledStr[ip++] = 4;
+                break;
             }
         case MUL:
             {
                 compiledStr[ip++] = 5;
+                break;
             }
         case JMP:
-            {
-                skipSpaces(&cmd);
-                marks.labels[marks.marksCount++] = {makeHash(cmd, cmd - strchr(cmd, ' ')), ip};
+            { 
+                makeMark(&ip, compiledStr, cmd, &marks, 6);
+                break;
             }
+        case JGE:
+            {
+                makeMark(&ip, compiledStr, cmd, &marks, 7);
+                break;
+            }
+        case JLE:
+            {
+                makeMark(&ip, compiledStr, cmd, &marks, 8);
+                break;
+            }
+        case CALL:
+            {
+                makeMark(&ip, compiledStr, cmd, &marks, 9);
+                break;
+            }
+        case RET:
+            compiledStr[ip++] = 10;
+            break;
         default:
             {
-            c_string labelStr;
+            c_string labelStr;  
             if ((labelStr = strtok(rawCode, ":")) != nullptr)
             {
                 labels.labels[labels.labelsCount++] = {makeHash(labelStr, strlen(labelStr)), ip};
@@ -198,13 +222,14 @@ c_string compiler (c_string rawCode, int cmdCount)
             {
                 assert(0 && "Wrong label");
             }
+            rawCode += strlen(rawCode) + 1;
             break;
             }
         }
-
         rawCode += strlen(rawCode) + 1;
     }
-
+    makeJMP(compiledStr, &marks, &labels);
+    
     FILE* compiledFile = fopen("output.bin", "wb+");
     fwrite(compiledStr, sizeof(char), ip, compiledFile);
     printf("%s", compiledStr);
