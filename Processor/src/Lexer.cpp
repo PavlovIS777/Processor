@@ -1,10 +1,10 @@
 #include "Lexer.h"
 #include "assert.h"
-#include "ProcessorCompilerCfg.h"
-#include "Assembling.h"
 #include <unistd.h>
 #include <stdio.h>
 
+uint64_t CMD_HASHES[CMD_ENUM_LEN];
+uint64_t REG_HASHES[REG_ENUM_LEN];
 
 uint8_t findBrackets (c_string* args)
 {

@@ -5,9 +5,6 @@
 #include <stdint.h>
 #include "ProcessorCompilerCfg.h"
 
-uint64_t CMD_HASHES[CMD_ENUM_LEN];
-uint64_t REG_HASHES[REG_ENUM_LEN];
-
 void makeCompile(const c_string dir);
 
 c_string strParser(c_string string, int* countStr);

@@ -2,8 +2,6 @@
 #include "Types.h"
 #include <stdio.h>
 #include <stdlib.h>
-#include "ProcessorCompilerCfg.h"
-#include "Lexer.h"
 
 int main(int argc, char* argv[])
 {

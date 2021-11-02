@@ -8,6 +8,10 @@
 #include <inttypes.h>
 #include <unistd.h>
 
+extern uint64_t CMD_HASHES[CMD_ENUM_LEN];
+extern uint64_t REG_HASHES[REG_ENUM_LEN];
+
+
 c_string mkInputDir (c_string filename)
 {
     c_string dir = (c_string)safeCalloc(20, sizeof(char));
