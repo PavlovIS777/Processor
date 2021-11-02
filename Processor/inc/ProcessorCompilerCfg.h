@@ -1,29 +1,32 @@
 #ifndef PROCESSORCOMPILERCFG_H
 #define PROCESSORCOMPILERCFG_H
 
-enum cmdHash
+#include <stdint.h>
+
+#define DEF_CMD(CMD, ID)       \
+    CMD_##CMD = ID,            \
+
+enum cmdId
 {
-    HLT  = 12702567513871516423, //0
-    PUSH = 10765274589010315799, //1
-    POP  = 5089677864028293143 , //2
-    ADD  = 17827079209670796541, //3
-    SUB  = 5144971033618411685 , //4
-    MUL  = 743300950465355368  , //5
-    JMP  = 9173871738894164855 , //6
-    JGE  = 4000240509173947135 , //7
-    JLE  = 11284796518070371048, //8
-    CALL = 12933319170532227001, //9
-    RET  = 888342110980918609    //10
-    
+    ERROR_CMD = -1,
+    #include <DEF_CMD.h>
+    CMD_LABEL,
+    CMD_ENUM_LEN
 };  
 
-enum regHash
+#undef DEF_CMD
+
+#define DEF_REG(NAME, ID)   \
+    REG_##NAME = ID - 1,    \
+
+enum regId
 {
-    ax = 12174441381696988942, //1
-    bx = 10671071278501398061, //2
-    cx = 11969467366185082959, //3
-    dx = 12187072656125612012  //4
+    REG_EMPTY = -1,
+    #include "DEF_REG.h"
+    REG_ENUM_LEN
 };
+
+#undef DEF_REG
 
 struct label
 {
@@ -45,10 +48,14 @@ struct Labels
     label* labels;
 };
 
-
-
-
-
-
+struct CMD
+{
+    c_string cmd;    
+    uint8_t cmdId;
+    uint8_t mem;
+    uint8_t reg;
+    uint8_t scannedNum;
+    int num;
+};
 
 #endif //!PROCESSORCOMPILERCFG_H

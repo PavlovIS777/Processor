@@ -1,3 +1,43 @@
-POP [ax+3]          
-PUSH 10        
-MUL      
+HLT 
+
+
+
+
+getColor:
+
+    PUSH 450
+    PUSH ax
+    SUB
+    POP ax
+
+    PUSH 450
+    PUSH bx
+    SUB
+    POP bx
+
+
+    PUSH dx
+
+    PUSH ax
+    PUSH ax
+    MUL
+
+    PUSH bx
+    PUSH bx
+    MUL
+
+    ADD 
+
+JGE notInCircle
+
+inCircle:
+    POP ax
+    PUSH 756895
+    PUSH ax
+    RET
+
+notInCircle:
+    POP ax
+    PUSH 7595
+    PUSH ax
+    RET

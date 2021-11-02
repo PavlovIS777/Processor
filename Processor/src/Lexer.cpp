@@ -1,9 +1,12 @@
 #include "Lexer.h"
 #include "assert.h"
+#include "ProcessorCompilerCfg.h"
+#include "Assembling.h"
 #include <unistd.h>
 #include <stdio.h>
 
-int findBrackets (c_string* args)
+
+uint8_t findBrackets (c_string* args)
 {
     skipSpaces(args);
     if (strchr(*args, '[') == nullptr && strchr(*args, ']') == nullptr)
@@ -54,33 +57,29 @@ int skipSpaces (c_string* args)
 }
 
 
-int findRegister (c_string* args)
+#define DEF_REG(NAME, ID) \
+    case ID:              \
+        *args += 2;       \
+        return ID;        \
+        break;            \
+
+uint8_t findRegister (c_string* args)
 {
     skipSpaces(args);
-    int regHash = makeHash(*args, 2);
 
-    switch (regHash)
+    uint8_t regId = getRegId (*args);
+    switch (regId)
     {
-    case ax:
-        *args += 2;
-        return 1;
-    case bx:
-        *args += 2;
-        return 2;
-    case cx:
-        *args += 2;
-        return 3;
-    case dx:
-        *args += 2;
-        return 4;
-    default:
-        return 0;
+        #include "DEF_REG.h"
     }
     return 0;
 }
 
+#undef DEF_REG
 
-int findSign(c_string* args)
+
+
+int8_t findSign(c_string* args)
 {
     skipSpaces(args);
     if (**args == '+')
@@ -96,27 +95,61 @@ int findSign(c_string* args)
     else return 0;
 }
 
-// c_string findLexemEnd(c_string cmd, int scanned, int bracket, int reg)
-// {
-//     if(bracket)
-//         return strchr(cmd, ']');
-//     if (scanned)
-//     {
-//         while(*cmd != ' ') {cmd++;}
-//         return cmd;
-//     }
-//     if (reg)
-//         return cmd;
-        
-// }
 
-int findNum(c_string* args, int* num)
+uint8_t findNum(c_string* args, int* num)
 {
-    skipSpaces(args);
-    int scanned = sscanf(*args, "%d", num);
+    int8_t sign = findSign(args);
+    uint8_t scanned = 0;
+    scanned = sscanf(*args, "%d", num);
+    scanned %= 255;
     if (scanned)
         while (**args && **args >= '0' && **args <= '9') {++*args;}
+    if(sign) {*num *= sign;}
     return scanned;
+}
+
+#define DEF_CMD(CMD, ID)                \
+        if (hash == CMD_HASHES[ID])     \
+            return ID;                  \
+
+int8_t getCMDId (c_string* lexem)
+{
+    skipSpaces(lexem);
+    if (*(*lexem + strlen(*lexem) - 1) == ':') {return CMD_LABEL;}
+    uint64_t tmp = CMD_HASHES[0];
+    c_string offset = strchr(*lexem, ' ')? strchr(*lexem, ' ') : *lexem + strlen(*lexem);
+    uint64_t hash = makeHash(*lexem, offset - *lexem);
+    *lexem = offset;
+    #include "DEF_CMD.h"
+
+    return ERROR_CMD;
+}
+
+#undef DEF_CMD
+
+#define DEF_REG(CMD, ID)                \
+        if (hash == REG_HASHES[ID])     \
+        {                               \
+            *lexem += 2;                \
+            return ID;                  \
+        }                               \
+
+uint8_t getRegId (c_string lexem)
+{
+    uint64_t hash = makeHash(lexem, 2);
+    #include "DEF_REG.h"
+
+    return REG_EMPTY;
+}
+
+#undef DEF_REG
+
+void makeLexem(CMD* cmd)
+{
+    cmd->mem = findBrackets(&(cmd->cmd));
+    cmd->reg = findRegister(&(cmd->cmd));
+    cmd->scannedNum = findNum(&(cmd->cmd), &(cmd->num));
+    if(cmd->mem) {cmd->cmd++;}
 }
 
 
@@ -129,7 +162,7 @@ void makeMark(int* ip, c_string compiledStr, c_string cmd, Marks* marks, char cm
     int defaultValue = -1;
     memcpy(&compiledStr[*ip], &defaultValue, sizeof(int));
     (*ip) += 4;
-}
+}   
 
 void makeJMP (c_string compiledStr, Marks* marks, Labels* labels)
 {
@@ -142,8 +175,16 @@ void makeJMP (c_string compiledStr, Marks* marks, Labels* labels)
                 memcpy(&compiledStr[marks->labels[i].ip + 1], &labels->labels[j].ip, 4);
                 break;
             }
+
+            if (j + 1 == labels->labelsCount) {assert(0 && "LABEL NOT FOUND");}
         }
     }
 }
 
-
+void resetCmdStruct(CMD* cmd)
+{
+    cmd->mem = 0;
+    cmd->num = 0;
+    cmd->reg = 0;
+    cmd->cmdId = -1;
+}

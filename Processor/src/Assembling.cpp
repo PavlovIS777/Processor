@@ -1,5 +1,4 @@
 #include "Assembling.h"
-#include "ProcessorCompilerCfg.h"
 #include "Lexer.h"
 #include <string.h>
 #include <stdlib.h>
@@ -16,6 +15,23 @@ c_string mkInputDir (c_string filename)
     strcat(dir, filename);
     return dir;
 }
+
+#define DEF_CMD(CMD, ID)                                    \
+        CMD_HASHES[ID] = makeHash(#CMD, strlen(#CMD));      \
+        printf("%d: %zu\n", ID, CMD_HASHES[ID]);                      \
+
+#define DEF_REG(NAME, ID)                                   \
+        REG_HASHES[ID] = makeHash(#NAME, strlen(#NAME));    \
+
+void init_hashes(uint64_t* CMD_HASHES, uint64_t* REG_HASHES)
+{
+    #include "DEF_CMD.h"
+    #include "DEF_REG.h"
+}
+
+#undef DEF_CMD
+#undef DEF_REG
+
 
 void* safeCalloc(size_t count, size_t size)
 {
@@ -36,34 +52,39 @@ c_string strParser(c_string string, int* countStr)
     int len = strlen(string);
     int currentLen = 0;
     
-    for (int i = 0, j = 0; i < len; ++i)
+    for (int i = 0, j = 0; i < len;)
     {
         if (string[i] == '#')
         {
             if (currentLen == 0)
-                while(i < len? string[++i] != '\n' : 0);
+                while(string[i] != '\n' && i < len) {++i;}
             else
             {
-                while(i < len? string[++i] != '\n' : 0);
+                while(i < len && string[i++] != '\n');
                 rawCode[j++] = '\0';
                 currentLen = 0;
                 ++(*countStr);
             }
-            continue;
         }
-
-        if (string[i] == '\n')
+        else if (string[i] == '\n')
         {
+            if (currentLen == 0)
+                while(i < len && string[++i] == '\n');
+            else
+            {
             rawCode[j++] = '\0';
             currentLen = 0;
             ++(*countStr);
+            ++i;
+            }
         }
         else if (currentLen == 0 && string[i] == ' ')
-            continue;
+            ++i;
         else
         {
             rawCode[j++] = string[i];
             ++currentLen;
+            ++i;
         }
     }
     if (string[len] != '\n' && currentLen != 0)
@@ -71,7 +92,7 @@ c_string strParser(c_string string, int* countStr)
     return rawCode;
 }
 
-c_string doAssembler(c_string dir)
+void makeCompile(const c_string dir)
 {
     FILE* assemblerInput = fopen(dir, "rb");
 
@@ -86,27 +107,56 @@ c_string doAssembler(c_string dir)
     size_t bytes = ftell(assemblerInput);
     rewind(assemblerInput);
 
-    char* assemblerStr = (char*)safeCalloc(bytes + 1, sizeof(char));
+    char* inputStr = (char*)safeCalloc(bytes + 1, sizeof(char));
 
-    fread(assemblerStr, sizeof(char), bytes, assemblerInput);
+    fread(inputStr, sizeof(char), bytes, assemblerInput);
     
     int strCount = 0;
-    c_string rawCodeAsm = strParser(assemblerStr, &strCount);
+    c_string rawCodeAsm = strParser(inputStr, &strCount);
 
-    c_string compiledFile = compiler(rawCodeAsm, strCount);
-    
-    return compiledFile;
+    makeASSembler(rawCodeAsm, strCount);
 }
 
-c_string compiler (c_string rawCode, int cmdCount)
+void outputCompiledProgramm(const c_string compiledStr, int ip)
+{
+    FILE* compiledFile = fopen("output.bin", "wb+");
+    fwrite(compiledStr, sizeof(char), ip, compiledFile);
+}
+
+#define DEF_CMD(CMD, ID)                                                                        \
+        case ID:                                                                                \
+            {                                                                                   \
+            cmdStruct.cmdId = ID;                                                               \
+            makeLexem(&cmdStruct);                                                              \
+            if (cmdStruct.scannedNum)                                                           \
+            {                                                                                   \
+                memcpy(&compiledStr[ip], &cmdStruct.cmdId, 8);                                  \
+                ip += 8;                                                                        \
+            }                                                                                   \
+            else                                                                                \
+            {                                                                                   \
+                memcpy(&compiledStr[ip], &cmdStruct.cmdId, 4);                                  \
+                ip += 4;                                                                        \
+            }                                                                                   \
+            skipSpaces(&cmdStruct.cmd);                                                         \
+            if(*cmdStruct.cmd != '\0') {assert(0 && "WRONG COMMAND, CHECK LEXEM ENDING.");}     \
+            cmdStruct.cmd += 1;                                                                 \
+            resetCmdStruct(&cmdStruct);                                                         \
+            }                                                                                   \
+            break;                                                                              \
+
+
+void makeASSembler(c_string rawCode, int cmdCount)
 {
     int rawLen = strlen(rawCode);
     c_string compiledStr = (c_string)safeCalloc(rawLen, sizeof(char));
     int ip = 0; //instraction pointer
-    c_string cmd = nullptr;
 
     Labels labels = {0, 100, (label*)safeCalloc(100, sizeof(label))};
     Marks marks = {0, 100, (label*)safeCalloc(100, sizeof(label))};
+    CMD cmdStruct = {rawCode, 0, 0, 0, 0, 0};
+    init_hashes(CMD_HASHES, REG_HASHES);
+
     while (cmdCount--)
     {
         if (ip + 10 > rawLen)
@@ -115,135 +165,39 @@ c_string compiler (c_string rawCode, int cmdCount)
             compiledStr = (c_string)realloc(compiledStr, rawLen);
             assert(compiledStr);
         }
-        skipSpaces(&rawCode);
 
-        if (makeHash(rawCode, 3) == HLT)
-            break;
-        
-        cmd = strchr(rawCode, ' ') != nullptr? strchr(rawCode, ' ') : rawCode + strlen(rawCode);
-        size_t hashCmd = 0;
-        int cmdIdLen = -1;
-        
-        if (cmd != nullptr)
+        uint8_t cmdId = getCMDId(&(cmdStruct.cmd));
+
+        if (cmdId >= CMD_JMP && cmdId <= CMD_CALL)
         {
-            cmdIdLen = cmd - rawCode;
-            hashCmd = makeHash(rawCode, cmdIdLen);
-        }
-
-        switch (hashCmd)
-        {
-        case PUSH:
-            {
-            int num = 0;
-            int bracket = findBrackets(&cmd);
-            int reg = findRegister(&cmd);
-            int sign = findSign(&cmd);
-            //printf("reg: %d\nsign: %d\nbrack: %d\n", reg, sign, bracket);
-            
-            skipSpaces(&cmd);
-            int scanned = findNum(&cmd, &num);
-            
-            
-
-
-            if (scanned == 0)
-            {
-                if (sign) {assert(0 && "NO NUMBER VALUE FOR PUSH, BUT SIGN EXIST");}
-                if (!reg) {assert(0 && "NO INPUT VALUE FOR PUSH");}
-            }
-            num = bracket? num*sign : num;
-
-            compiledStr[ip++] = 1;
-            compiledStr[ip++] = reg;
-            compiledStr[ip++] = bracket;
-            memcpy(&compiledStr[ip], &num, sizeof(num));
+            skipSpaces(&cmdStruct.cmd);
+            marks.labels[marks.marksCount++] = {makeHash(cmdStruct.cmd, strlen(cmdStruct.cmd)), ip};
+            cmdStruct.cmd += strlen(cmdStruct.cmd) + 1;
+            compiledStr[ip++] = cmdId;
             ip += 4;
-            break;
-            }
-        case POP:
-            {
-                int num = 0;
-                int bracket = findBrackets(&cmd);
-                int reg = findRegister(&cmd);
-                int sign = findSign(&cmd);
-
-                int scanned = findNum(&cmd, &num);
-                num = bracket? num*sign : num;
-                
-                if (!reg && scanned)            {assert(0 && "POPING :^) TO NUMBER NOR ALLOWED");}
-                if (reg && scanned && !bracket) {assert(0 && "POPING :^) TO NUMBER NOR ALLOWED");}
-
-                compiledStr[ip++] = 2;
-                compiledStr[ip++] = reg;
-                compiledStr[ip++] = bracket;
-                memcpy(&compiledStr[ip], &num, sizeof(num));
-                ip += 4;
-                break;
-            }
-        case ADD:
-            {
-                compiledStr[ip++] = 3;
-                break;
-            }
-        case SUB:
-            {
-                compiledStr[ip++] = 4;
-                break;
-            }
-        case MUL:
-            {
-                compiledStr[ip++] = 5;
-                break;
-            }
-        case JMP:
-            { 
-                makeMark(&ip, compiledStr, cmd, &marks, 6);
-                break;
-            }
-        case JGE:
-            {
-                makeMark(&ip, compiledStr, cmd, &marks, 7);
-                break;
-            }
-        case JLE:
-            {
-                makeMark(&ip, compiledStr, cmd, &marks, 8);
-                break;
-            }
-        case CALL:
-            {
-                makeMark(&ip, compiledStr, cmd, &marks, 9);
-                break;
-            }
-        case RET:
-            compiledStr[ip++] = 10;
-            break;
-        default:
-            {
-            c_string labelStr;  
-            if ((labelStr = strtok(rawCode, ":")) != nullptr)
-            {
-                labels.labels[labels.labelsCount++] = {makeHash(labelStr, strlen(labelStr)), ip};
-            }
-            else
-            {
-                assert(0 && "Wrong label");
-            }
-            rawCode += strlen(rawCode) + 1;
-            break;
-            }
+            resetCmdStruct(&cmdStruct);
+            continue;
         }
-
-        cmd = strchr(cmd, ']') != nullptr? strchr(cmd, ']') + 1 : cmd;
-        skipSpaces(&cmd);
-        if(*cmd != '\0') {assert(0 && "WRONG LEXEM");}
-
-        rawCode += strlen(rawCode) + 1;
+        switch (cmdId)
+        {
+            case CMD_LABEL:
+                labels.labels[labels.labelsCount++] = {makeHash(cmdStruct.cmd, strlen(cmdStruct.cmd) - 1), ip};
+                cmdStruct.cmd += strlen(cmdStruct.cmd) + 1;
+                resetCmdStruct(&cmdStruct);
+                break;
+            #include "DEF_CMD.h"
+        
+            default:
+                assert(0 && "COMPILER FAULT.");
+                break;
+        }
     }
+
+#undef DEF_CMD
+
     makeJMP(compiledStr, &marks, &labels);
     
-    FILE* compiledFile = fopen("output.bin", "wb+");
-    fwrite(compiledStr, sizeof(char), ip, compiledFile);
+    outputCompiledProgramm(compiledStr, ip);
 }
 
 
