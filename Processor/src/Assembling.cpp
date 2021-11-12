@@ -1,5 +1,6 @@
 #include "Assembling.h"
 #include "Lexer.h"
+#include "Tools.h"
 #include <string.h>
 #include <stdlib.h>
 #include <assert.h>
@@ -20,14 +21,13 @@ c_string mkInputDir (c_string filename)
     return dir;
 }
 
-#define DEF_CMD(CMD, ID)                                    \
+#define DEF_CMD(CMD, ID, CODE)                              \
         CMD_HASHES[ID] = makeHash(#CMD, strlen(#CMD));      \
-        printf("%d: %zu\n", ID, CMD_HASHES[ID]);                      \
 
 #define DEF_REG(NAME, ID)                                   \
         REG_HASHES[ID] = makeHash(#NAME, strlen(#NAME));    \
 
-void init_hashes(uint64_t* CMD_HASHES, uint64_t* REG_HASHES)
+void init_hashes()
 {
     #include "DEF_CMD.h"
     #include "DEF_REG.h"
@@ -36,27 +36,13 @@ void init_hashes(uint64_t* CMD_HASHES, uint64_t* REG_HASHES)
 #undef DEF_CMD
 #undef DEF_REG
 
-
-void* safeCalloc(size_t count, size_t size)
-{
-    void* temp = calloc(count, size);
-    if (temp != nullptr)
-        return temp;
-    else
-    {
-        printf("Can't allocte memory.");
-        assert(temp);
-        return nullptr;
-    }
-}
-
 c_string strParser(c_string string, int* countStr)
 {
     c_string rawCode = (c_string)safeCalloc(strlen(string) + 10, sizeof(char));
-    int len = strlen(string);
-    int currentLen = 0;
+    size_t len = strlen(string);
+    size_t currentLen = 0;
     
-    for (int i = 0, j = 0; i < len;)
+    for (size_t i = 0, j = 0; i < len;)
     {
         if (string[i] == '#')
         {
@@ -103,8 +89,6 @@ void makeCompile(const c_string dir)
     if (assemblerInput == nullptr)
     {
         assemblerInput = fopen("input.bin", "rb");
-        // printf("Can't open input file");
-        // assert(assemblerInput);
     }
 
     fseek(assemblerInput, 0, SEEK_END);
@@ -121,13 +105,13 @@ void makeCompile(const c_string dir)
     makeASSembler(rawCodeAsm, strCount);
 }
 
-void outputCompiledProgramm(const c_string compiledStr, int ip)
+void outputCompiledProgram(const c_string compiledStr, size_t ip)
 {
     FILE* compiledFile = fopen("output.bin", "wb+");
     fwrite(compiledStr, sizeof(char), ip, compiledFile);
 }
 
-#define DEF_CMD(CMD, ID)                                                                        \
+#define DEF_CMD(CMD, ID, CODE)                                                                        \
         case ID:                                                                                \
             {                                                                                   \
             cmdStruct.cmdId = ID;                                                               \
@@ -152,14 +136,14 @@ void outputCompiledProgramm(const c_string compiledStr, int ip)
 
 void makeASSembler(c_string rawCode, int cmdCount)
 {
-    int rawLen = strlen(rawCode);
+    size_t rawLen = strlen(rawCode);
     c_string compiledStr = (c_string)safeCalloc(rawLen, sizeof(char));
-    int ip = 0; //instraction pointer
+    size_t ip = 0; //instraction pointer
 
     Labels labels = {0, 100, (label*)safeCalloc(100, sizeof(label))};
     Marks marks = {0, 100, (label*)safeCalloc(100, sizeof(label))};
     CMD cmdStruct = {rawCode, 0, 0, 0, 0, 0};
-    init_hashes(CMD_HASHES, REG_HASHES);
+    init_hashes();
 
     while (cmdCount--)
     {
@@ -201,7 +185,7 @@ void makeASSembler(c_string rawCode, int cmdCount)
 
     makeJMP(compiledStr, &marks, &labels);
     
-    outputCompiledProgramm(compiledStr, ip);
+    outputCompiledProgram(compiledStr, ip);
 }
 
 

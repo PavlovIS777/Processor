@@ -3,8 +3,8 @@
 
 #include <stdint.h>
 
-#define DEF_CMD(CMD, ID)       \
-    CMD_##CMD = ID,            \
+#define DEF_CMD(CMD, ID, CODE)       \
+    CMD_##CMD = ID,                  \
 
 enum cmdId
 {
@@ -31,7 +31,7 @@ enum regId
 struct label
 {
     size_t hash;
-    int ip;
+    size_t ip;
 };
 
 struct Marks

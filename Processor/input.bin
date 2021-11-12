@@ -1,5 +1,5 @@
 abcd:
 #PUSH 100#SDASD
-#PUSH [ax--2]
+PUSH [ax--2]
 JMP abcd
 #DAD

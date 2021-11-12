@@ -11,6 +11,6 @@ int main(int argc, char* argv[])
         makeCompile("src/input.bin");
     else
         makeCompile(mkInputDir(filename));
-
+    
     return 0;
 }

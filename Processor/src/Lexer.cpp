@@ -1,5 +1,6 @@
 #include "Lexer.h"
 #include "assert.h"
+#include "Tools.h"
 #include <unistd.h>
 #include <stdio.h>
 
@@ -15,9 +16,9 @@ uint8_t findBrackets (c_string* args)
 
     int bracketsCount = 0;
     int bracketsSeq = 0;
-    int len = strlen(*args);
+    size_t len = strlen(*args);
 
-    for (int i = 0; i < len && bracketsSeq >= 0 && bracketsCount <= 2; ++i)
+    for (size_t i = 0; i < len && bracketsSeq >= 0 && bracketsCount <= 2; ++i)
     {
         if ((*args)[i] == '['? ++bracketsCount : 0)
             ++bracketsSeq;
@@ -31,23 +32,6 @@ uint8_t findBrackets (c_string* args)
     return 1;
 }
 
-size_t makeHash(const char* str, size_t len) 
-{
-    size_t hash = 0;
-    for (size_t it = 0; it < len; str++, it++) 
-    {
-        hash += (unsigned char)(*str);
-        hash += (hash << 20);
-        hash ^= (hash >> 12);
-    }
-
-    hash += (hash << 6);
-    hash ^= (hash >> 22);
-    hash += (hash << 29);
-
-    return hash;
-}
-
 int skipSpaces (c_string* args)
 {
     int spaces = 0;
@@ -57,11 +41,11 @@ int skipSpaces (c_string* args)
 }
 
 
-#define DEF_REG(NAME, ID) \
-    case ID:              \
-        *args += 2;       \
-        return ID;        \
-        break;            \
+#define DEF_REG(NAME, ID)       \
+    case ID:                    \
+        *args += 2;             \
+        return ID;              \
+        break;                  \
 
 uint8_t findRegister (c_string* args)
 {
@@ -71,6 +55,9 @@ uint8_t findRegister (c_string* args)
     switch (regId)
     {
         #include "DEF_REG.h"
+
+        default:
+            break;
     }
     return 0;
 }
@@ -108,7 +95,7 @@ uint8_t findNum(c_string* args, int* num)
     return scanned;
 }
 
-#define DEF_CMD(CMD, ID)                \
+#define DEF_CMD(CMD, ID, CODE)          \
         if (hash == CMD_HASHES[ID])     \
             return ID;                  \
 
@@ -116,7 +103,6 @@ int8_t getCMDId (c_string* lexem)
 {
     skipSpaces(lexem);
     if (*(*lexem + strlen(*lexem) - 1) == ':') {return CMD_LABEL;}
-    uint64_t tmp = CMD_HASHES[0];
     c_string offset = strchr(*lexem, ' ')? strchr(*lexem, ' ') : *lexem + strlen(*lexem);
     uint64_t hash = makeHash(*lexem, offset - *lexem);
     *lexem = offset;
@@ -127,10 +113,10 @@ int8_t getCMDId (c_string* lexem)
 
 #undef DEF_CMD
 
-#define DEF_REG(CMD, ID)                \
+#define DEF_REG(NAME, ID)               \
         if (hash == REG_HASHES[ID])     \
         {                               \
-            *lexem += 2;                \
+            lexem += 2;                 \
             return ID;                  \
         }                               \
 
@@ -153,10 +139,10 @@ void makeLexem(CMD* cmd)
 }
 
 
-void makeMark(int* ip, c_string compiledStr, c_string cmd, Marks* marks, char cmdId)
+void makeMark(size_t* ip, c_string compiledStr, c_string cmd, Marks* marks, char cmdId)
 {
     skipSpaces(&cmd);
-    int labelLen = strlen(cmd);
+    size_t labelLen = strlen(cmd);
     marks->labels[marks->marksCount++] = {makeHash(cmd, labelLen), (*ip)};
     compiledStr[(*ip)++] = cmdId;
     int defaultValue = -1;
