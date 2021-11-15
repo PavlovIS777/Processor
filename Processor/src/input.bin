@@ -1,41 +1,87 @@
 
+DO_CIRCLE:
 
-
-
-
+    IN
+    POP dx
+    PUSH 0
+    PUSH dx
+    JLE END_CIRCLE
+    PUSH dx
+    PUSH dx
+    MUL
+    POP dx
+    PUSH 0
+    PUSH 0
+    POP ax
+    POP bx
+    A_BEGIN:
+    PUSH 900
+    PUSH ax
+    JGE END
+        PUSH 0
+        POP bx
+        B_BEGIN:
+            PUSH 900
+            PUSH bx
+            JGE B_END
+            PUSH ax
+            PUSH bx
+            CALL getColor
+            POP cx
+            POP bx
+            POP ax
+            PUSH dx
+            PUSH ax
+            PUSH 900
+            MUL
+            PUSH bx
+            ADD
+            PUSH ax
+            ADD
+            POP dx
+            PUSH cx
+            POP [dx]
+            POP dx
+            PUSH bx
+            PUSH 1
+            ADD
+            POP bx
+            JMP B_BEGIN
+    B_END:
+        PUSH ax
+        PUSH 1
+        ADD
+        POP ax
+        JMP A_BEGIN
+    END:
+    PUSH 400
+    POP ax
+    JMP DO_CIRCLE
+END_CIRCLE:
+HLT
 getColor:
-
     PUSH 450
     PUSH ax
     SUB
     POP ax
-
     PUSH 450
     PUSH bx
     SUB
     POP bx
-
-
     PUSH dx
-
     PUSH ax
     PUSH ax
     MUL
-
     PUSH bx
     PUSH bx
     MUL
-
     ADD 
-
 JGE notInCircle
-
 inCircle:
     POP ax
     PUSH 756895
     PUSH ax
     RET
-
 notInCircle:
     POP ax
     PUSH 7595

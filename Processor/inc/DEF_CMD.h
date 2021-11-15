@@ -15,25 +15,34 @@ DEF_CMD(POP, 2,
 
 DEF_CMD(ADD, 3,
 {
-    PUSH_;
+    int tmp1 = POP_;
+    int tmp2 = POP_;
+    int tmp = tmp1 + tmp2;
+    PUSH_tmp;
 })
 
 DEF_CMD(SUB, 4,
 {
-    PUSH_;
+    int tmp1 = POP_;
+    int tmp2 = POP_;
+    int tmp = tmp2 - tmp1;
+    PUSH_tmp;
 })
 
 DEF_CMD(MUL, 5, 
 {
-    PUSH_;
+    int tmp1 = POP_;
+    int tmp2 = POP_;
+    int tmp = tmp1 * tmp2;
+    PUSH_tmp;
 })
 
 DEF_CMD(DIV, 6,
 {
     int tmp1 = POP_;
     int tmp2 = POP_;
-    tmp2 = tmp1 / tmp2;
-    pushMyStack(&invoker->stack, (ptr_t)&tmp2);
+    int tmp = tmp1 / tmp2;
+    PUSH_tmp;
 })
 
 DEF_CMD(JMP, 7, 
@@ -59,5 +68,10 @@ DEF_CMD(CALL, 10,
 
 DEF_CMD(RET, 11, 
 {
-    RET_;
+    POP_;
+})
+
+DEF_CMD(IN, 12, 
+{
+    IN_;
 })

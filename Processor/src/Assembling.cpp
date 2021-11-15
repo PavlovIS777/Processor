@@ -107,7 +107,7 @@ void makeCompile(const c_string dir)
 
 void outputCompiledProgram(const c_string compiledStr, size_t ip)
 {
-    FILE* compiledFile = fopen("output.bin", "wb+");
+    FILE* compiledFile = fopen("output/output.bin", "wb+");
     fwrite(compiledStr, sizeof(char), ip, compiledFile);
 }
 
@@ -153,7 +153,7 @@ void makeASSembler(c_string rawCode, int cmdCount)
             compiledStr = (c_string)realloc(compiledStr, rawLen);
             assert(compiledStr);
         }
-
+        printf("%s\n", cmdStruct.cmd);
         uint8_t cmdId = getCMDId(&(cmdStruct.cmd));
 
         if (cmdId >= CMD_JMP && cmdId <= CMD_CALL)
@@ -176,7 +176,7 @@ void makeASSembler(c_string rawCode, int cmdCount)
             #include "DEF_CMD.h"
         
             default:
-                assert(0 && "COMPILER FAULT.");
+                assert(0 && cmdId && "COMPILER FAULT.");
                 break;
         }
     }

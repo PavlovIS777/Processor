@@ -3,6 +3,7 @@ CC = g++
 INCDIR = inc
 SRCDIR = src
 OBJDIR = obj
+OUTDIR = output
 
 OBJCOMPFLAGS = -c -g -std=c++17 -I $(INCDIR) -Wall -Wextra -Weffc++ -Wc++0x-compat -Wc++11-compat -Wc++14-compat 
 OBJCOMPFLAGS += -Waggressive-loop-optimizations -Walloc-zero -Walloca -Walloca-larger-than=8192 -Warray-bounds 
@@ -38,7 +39,7 @@ COMPFLAGS += -Wmultistatement-macros -Wrestrict -Wshadow=global -Wsuggest-attrib
 COMPFLAGS += -fsized-deallocation -fstrict-overflow 
 COMPFLAGS += -flto-odr-type-merging -fno-omit-frame-pointer
 
-ASS_EXECUTABLE = processor.asm
+ASS_EXECUTABLE = $(OUTDIR)/processor.asm
 ASS_OBJECTS = $(OBJDIR)/Tools.o $(OBJDIR)/Lexer.o $(OBJDIR)/Assembling.o $(OBJDIR)/AssemblingMain.o
 
 asm: $(ASS_EXECUTABLE)
@@ -59,7 +60,7 @@ $(ASS_EXECUTABLE): $(ASS_OBJECTS)
 	$(CC) $(COMPFLAGS) $^ -o $@
 
 
-INV_EXECUTABLE = program.out
+INV_EXECUTABLE = $(OUTDIR)/program.out
 INV_OBJECTS = $(OBJDIR)/Tools.o $(OBJDIR)/DSL.o $(OBJDIR)/InvokerMain.o $(OBJDIR)/StackOverflow.o $(OBJDIR)/Execution.o 
 
 inv: $(INV_EXECUTABLE)
@@ -82,6 +83,5 @@ $(INV_EXECUTABLE): $(INV_OBJECTS)
 PHONY.:clean
 
 clean:
-	rm -f obj/*
-	rm -f processor.asm
-	rm -f program.out
+	rm -f $(OBJDIR)/*
+	rm -f $(OUTDIR)/*

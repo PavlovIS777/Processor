@@ -18,11 +18,12 @@ struct Registers
 struct Invoker
 {   
     c_string compiledCode;
+    int codeBytesLen;
     int* memory;
     int memPos;
     int videomemPos;
     Registers registers; 
-    size_t ip;
+    int ip;
     MyStack stack;
 };
 

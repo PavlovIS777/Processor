@@ -185,11 +185,12 @@ void pushMyStack(MyStack* stack, ptr_t element)
 {
     ENABLE_PROTECTION(assert(!isValidMyStack(stack));)
 
+    int tmp = 256 * STACK_BLOCK_CAPACITY;
+    int tmp2 = stack->len + STACK_BLOCK_CAPACITY * (stack->dataStruct.blockCount - 1) + 1;
     if (stack->len + STACK_BLOCK_CAPACITY * (stack->dataStruct.blockCount - 1) + 1 >=
         256 * STACK_BLOCK_CAPACITY)
     {
-        printf("Stack Overflow");
-        abort();
+        assert(0 && "Stack Overflow");
     }
     if (stack->len == STACK_BLOCK_CAPACITY * stack->dataStruct.blockCount)
     {
@@ -238,7 +239,7 @@ int popMyStackInt(MyStack* stack)
 
     if (stack->len == 0) {assert(0 && "STACK IS EMPTY!");}
 
-    int popedElem = *stack->top;
+    int popedElem = *(int*)(stack->top);
     
     if (stack->dataStruct.currentLen - 1 == 0 && stack->dataStruct.blockCount > 1) 
     {

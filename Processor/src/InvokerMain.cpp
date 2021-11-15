@@ -15,5 +15,6 @@ int main(void)
     //dumpStack(&(invoker.stack), stackIntPrint);
     executeProgram(&invoker);
     int tmp = 0;
+    printf("%d", *(int*)invoker.stack.top);
     return 0;
 }
