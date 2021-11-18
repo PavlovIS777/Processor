@@ -6,14 +6,16 @@
 #include "stdlib.h"
 #include "Tools.h"
 
-#define PUSH_       PUSH_FUNC(invoker, nullptr)
-#define PUSH_tmp    PUSH_FUNC(invoker, &tmp)
+#define PUSH_       PUSH_FUNC(invoker)
+#define PUSH_STACK  pushMyStack(&invoker->stack, (ptr_t)&num)
 #define POP_        POP_FUNC(invoker)
 #define JMP_        JMP_FUNC(invoker)
-#define HLT_        if(HLT_FUNC(invoker)) return;
+#define HLT_        if(HLT_FUNC()) return;
 #define RET_        RET_FUNC(invoker)
 #define CALL_       CALL_FUNC(invoker)
 #define IN_         IN_FUNC(invoker)
+#define OUT_        OUT_FUNC(invoker)
+#define POP_STACK   popMyStackInt(&(invoker->stack))
 
 Invoker invokerCtor()
 {
@@ -51,8 +53,9 @@ void invokerDtor(Invoker* invoker)
 
 void executeProgram(Invoker* invoker)
 {
-    for(;invoker->ip < invoker->codeBytesLen;)
+    while(invoker->compiledCode[invoker->ip] || 1)
     {
+        printf("cmdId: %d, ", invoker->compiledCode[invoker->ip]);
         switch (invoker->compiledCode[invoker->ip])
         {
             #include "DEF_CMD.h"
@@ -60,5 +63,7 @@ void executeProgram(Invoker* invoker)
                 assert(0 && "UNKNOWN CMD :^(");
                 break;
         }
+        printf("top: %d, ip: %d\n", *(int*)(invoker->stack.top), invoker->ip);
     }
+    printf("cmdId: %d, ", invoker->compiledCode[invoker->ip]);
 }

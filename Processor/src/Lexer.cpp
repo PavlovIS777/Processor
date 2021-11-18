@@ -173,4 +173,5 @@ void resetCmdStruct(CMD* cmd)
     cmd->num = 0;
     cmd->reg = 0;
     cmd->cmdId = -1;
+    cmd->scannedNum = 0;
 }

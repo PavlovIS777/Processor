@@ -16,7 +16,7 @@ extern uint64_t REG_HASHES[REG_ENUM_LEN];
 c_string mkInputDir (c_string filename)
 {
     c_string dir = (c_string)safeCalloc(20, sizeof(char));
-    strcpy(dir, "src/");
+    strcpy(dir, "programs/");
     strcat(dir, filename);
     return dir;
 }
@@ -88,9 +88,9 @@ void makeCompile(const c_string dir)
 
     if (assemblerInput == nullptr)
     {
-        assemblerInput = fopen("input.bin", "rb");
+        assemblerInput = fopen("programs/input.bin", "rb");
     }
-
+    assert(assemblerInput && "CAN'T OPEN INPUT FILE");
     fseek(assemblerInput, 0, SEEK_END);
     size_t bytes = ftell(assemblerInput);
     rewind(assemblerInput);
@@ -107,7 +107,7 @@ void makeCompile(const c_string dir)
 
 void outputCompiledProgram(const c_string compiledStr, size_t ip)
 {
-    FILE* compiledFile = fopen("output/output.bin", "wb+");
+    FILE* compiledFile = fopen("output.bin", "wb+");
     fwrite(compiledStr, sizeof(char), ip, compiledFile);
 }
 

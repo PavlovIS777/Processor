@@ -1,6 +1,8 @@
 #ifndef LEXER_H
 #define LEXER_H
 
+#pragma GCC diagnostic warning "-Wconversion"
+
 #include "Types.h"
 #include "ProcessorCompilerCfg.h" 
 #include <stdint.h>

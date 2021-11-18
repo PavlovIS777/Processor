@@ -184,9 +184,6 @@ MyStack createStack_(size_t size)
 void pushMyStack(MyStack* stack, ptr_t element)
 {
     ENABLE_PROTECTION(assert(!isValidMyStack(stack));)
-
-    int tmp = 256 * STACK_BLOCK_CAPACITY;
-    int tmp2 = stack->len + STACK_BLOCK_CAPACITY * (stack->dataStruct.blockCount - 1) + 1;
     if (stack->len + STACK_BLOCK_CAPACITY * (stack->dataStruct.blockCount - 1) + 1 >=
         256 * STACK_BLOCK_CAPACITY)
     {

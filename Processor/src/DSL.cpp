@@ -3,13 +3,8 @@
 #include "StackOverflow.h"
 #include <stdio.h>
 
-void PUSH_FUNC(Invoker* invoker, int* numberPtr)
-{              
-    if (numberPtr) 
-    {
-        pushMyStack(&invoker->stack, (ptr_t)numberPtr);
-        return;
-    }                                                   
+void PUSH_FUNC(Invoker* invoker)
+{                                                                
     switch (mem)                                                                 
     {                                                                            
     case 1:                                                                      
@@ -29,47 +24,52 @@ void PUSH_FUNC(Invoker* invoker, int* numberPtr)
 }
 
 int POP_FUNC(Invoker* invoker)         
-{                                          
+{                          
     switch (invoker->compiledCode[invoker->ip+2])                                                            
     {                                                                            
-    case 0:                                                                      
-        return popMyStackInt(&(invoker->stack));
-        invoker->ip += 4;                                          
+    case 0:
+        invoker->ip += 4;                                                                      
+        return popMyStackInt(&(invoker->stack));                                          
         break;                                                                   
     default:                                                                     
         *(reg) = popMyStackInt(&(invoker->stack));   
         invoker->ip += 4;
-        return *(reg);                            
+        return 0;                            
         break;                                                                   
     }                                                                
-}
+    }
 
-int HLT_FUNC(Invoker* invoker)
+int HLT_FUNC()
 {
     return 1;
 }
 
-int RET_FUNC(Invoker* invoker)
+void RET_FUNC(Invoker* invoker)
 {
-    POP_FUNC(invoker);
+    invoker->ip = popMyStackInt(&(invoker->stack)) + 5;
 }
 
 void CALL_FUNC(Invoker* invoker)
 {
-    PUSH_FUNC(invoker, &(invoker->ip));
-    invoker->ip = value;
+    pushMyStack(&(invoker->stack), (ptr_t)&(invoker->ip));
+    invoker->ip = jmpIP;
 }
 
 void JMP_FUNC(Invoker* invoker)
 {
-    invoker->ip = value;
+    invoker->ip = jmpIP;
 }
 
 void IN_FUNC(Invoker* invoker)
 {
     int tmp;
     scanf("%d", &tmp);
-    PUSH_FUNC(invoker, &tmp);
+    pushMyStack(&(invoker->stack), (ptr_t)&tmp);
     invoker->ip += 4;
 }
 
+void OUT_FUNC(Invoker* invoker)
+{
+    printf("%d", popMyStackInt(&(invoker->stack)));
+    invoker->ip += 4;
+}
