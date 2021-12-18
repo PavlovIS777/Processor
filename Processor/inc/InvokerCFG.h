@@ -6,6 +6,7 @@
 #include "StackOverflow.h"
 
 #define MAX_MEM_SIZE 1<<14
+#define SKIP_ZERORESULT_CMD_FLAG 0 ^ 255
 
 struct Registers
 {
@@ -13,6 +14,7 @@ struct Registers
     int bx;
     int cx;
     int dx;
+    int ex;
 };
 
 struct Invoker

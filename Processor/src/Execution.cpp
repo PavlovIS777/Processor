@@ -51,11 +51,22 @@ void invokerDtor(Invoker* invoker)
             CODE                \
             break;              \
 
+#define ZERO_FLAG ((invoker->compiledCode[invoker->ip]) & (1<<7)) >> 7        
+
 void executeProgram(Invoker* invoker)
 {
-    while(invoker->compiledCode[invoker->ip] || 1)
+    while(true)
     {
-        printf("cmdId: %d, ", invoker->compiledCode[invoker->ip]);
+        if (ZERO_FLAG) 
+        {
+            invoker->compiledCode[invoker->ip] &= 127;
+            if (invoker->registers.ex) 
+            {
+                invoker->ip += 4 + 4*invoker->compiledCode[invoker->ip+3];
+                continue;
+            }
+        }
+
         switch (invoker->compiledCode[invoker->ip])
         {
             #include "DEF_CMD.h"
@@ -63,7 +74,5 @@ void executeProgram(Invoker* invoker)
                 assert(0 && "UNKNOWN CMD :^(");
                 break;
         }
-        printf("top: %d, ip: %d\n", *(int*)(invoker->stack.top), invoker->ip);
     }
-    printf("cmdId: %d, ", invoker->compiledCode[invoker->ip]);
 }

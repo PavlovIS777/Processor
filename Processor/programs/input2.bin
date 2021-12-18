@@ -1,0 +1,156 @@
+IN
+POP ax
+IN
+POP bx
+IN
+POP cx
+
+
+PUSH ax
+PUSH 0
+JE LINEAR_EQ
+
+PUSH ax
+PUSH cx
+PUSH 4
+MUL
+MUL
+PUSH bx
+PUSH bx
+MUL
+SUB
+POP dx
+
+PUSH ax
+PUSH 1000
+MUL
+POP ax
+PUSH bx
+PUSH 1000
+MUL
+POP bx
+PUSH cx
+PUSH 1000
+MUL
+POP cx
+
+
+PUSH 0
+PUSH dx
+JGE TWO_ROOTS_
+    STR_OUT NO_ROOTS_str
+    HLT
+TWO_ROOTS_:
+
+PUSH dx
+PUSH 1000000
+MUL
+POP dx
+
+CALL SQRT
+
+STR_OUT TWO_ROOTS_str
+PUSH 2
+PUSH ax
+MUL
+PUSH dx
+PUSH bx
+PUSH -1
+MUL
+SUB
+DIV
+OUT
+
+PUSH 2
+PUSH ax
+MUL
+PUSH dx
+PUSH bx
+PUSH -1
+MUL
+ADD
+DIV
+OUT
+
+HLT
+
+
+
+
+
+
+LINEAR_EQ:
+PUSH bx
+PUSH 0
+JE CONSTANT
+STR_OUT ONE_ROOT_str
+PUSH bx
+PUSH cx
+PUSH -1000
+MUL
+DIV
+OUT
+HLT
+
+
+
+CONSTANT:
+    PUSH cx
+    PUSH 0
+    JE inf
+    STR_OUT NO_ROOTS_str
+    JMP END
+inf:
+    STR_OUT INF_ROOTS_str
+
+END:
+    HLT
+
+
+SQRT:
+    PUSH ax
+    PUSH 1
+    POP ax
+
+SQRT_begin:
+    PUSH ax
+    PUSH ax
+    MUL
+    PUSH dx
+JG greater
+    PUSH ax
+    POP dx
+    POP ax
+    RET
+
+
+greater:
+    PUSH ax
+    PUSH 1
+    ADD
+    POP ax
+    JMP SQRT_begin
+
+
+
+
+
+
+
+
+
+
+
+
+
+INF_ROOTS_str:
+    DB $INFINITY ROOTS$
+
+NO_ROOTS_str:
+    DB $NO ROOTS$
+
+TWO_ROOTS_str:
+    DB $TWO ROOTS$
+
+ONE_ROOT_str:
+    DB $ONE ROOT$

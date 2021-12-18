@@ -6,6 +6,7 @@
 
 uint64_t CMD_HASHES[CMD_ENUM_LEN];
 uint64_t REG_HASHES[REG_ENUM_LEN];
+uint8_t COMPILER_SKIP_ZERO_FLAG = 0;
 
 uint8_t findBrackets (c_string* args)
 {
@@ -103,8 +104,9 @@ int8_t getCMDId (c_string* lexem)
 {
     skipSpaces(lexem);
     if (*(*lexem + strlen(*lexem) - 1) == ':') {return CMD_LABEL;}
+    if (strchr(*lexem, 'Z')) {COMPILER_SKIP_ZERO_FLAG = 1;} else {COMPILER_SKIP_ZERO_FLAG = 0;}
     c_string offset = strchr(*lexem, ' ')? strchr(*lexem, ' ') : *lexem + strlen(*lexem);
-    uint64_t hash = makeHash(*lexem, offset - *lexem);
+    uint64_t hash = makeHash(*lexem, offset - *lexem - COMPILER_SKIP_ZERO_FLAG);
     *lexem = offset;
     #include "DEF_CMD.h"
 

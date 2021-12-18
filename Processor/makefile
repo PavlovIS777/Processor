@@ -1,4 +1,4 @@
-CC = g++
+CC = gcc
 
 INCDIR = inc
 SRCDIR = src

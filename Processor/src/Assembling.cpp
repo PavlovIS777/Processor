@@ -11,7 +11,7 @@
 
 extern uint64_t CMD_HASHES[CMD_ENUM_LEN];
 extern uint64_t REG_HASHES[REG_ENUM_LEN];
-
+extern uint8_t COMPILER_SKIP_ZERO_FLAG;
 
 c_string mkInputDir (c_string filename)
 {
@@ -111,10 +111,11 @@ void outputCompiledProgram(const c_string compiledStr, size_t ip)
     fwrite(compiledStr, sizeof(char), ip, compiledFile);
 }
 
-#define DEF_CMD(CMD, ID, CODE)                                                                        \
+#define DEF_CMD(CMD, ID, CODE)                                                                  \
         case ID:                                                                                \
             {                                                                                   \
             cmdStruct.cmdId = ID;                                                               \
+            cmdStruct.cmdId |= (COMPILER_SKIP_ZERO_FLAG<<7);                                    \
             makeLexem(&cmdStruct);                                                              \
             if (cmdStruct.scannedNum)                                                           \
             {                                                                                   \
@@ -153,7 +154,6 @@ void makeASSembler(c_string rawCode, int cmdCount)
             compiledStr = (c_string)realloc(compiledStr, rawLen);
             assert(compiledStr);
         }
-        printf("%s\n", cmdStruct.cmd);
         uint8_t cmdId = getCMDId(&(cmdStruct.cmd));
 
         if (cmdId >= CMD_JMP && cmdId <= CMD_CALL)

@@ -24,9 +24,11 @@ DEF_CMD(ADD, 3,
 
 DEF_CMD(SUB, 4,
 {
+
     int tmp1 = POP_STACK;
     int tmp2 = POP_STACK;
     int num = tmp1 - tmp2;
+    invoker->registers.ex = !num;
     PUSH_STACK;
     invoker->ip += 4;
 })
