@@ -46,7 +46,7 @@ int HLT_FUNC()
 
 void RET_FUNC(Invoker* invoker)
 {
-    invoker->ip = popMyStackInt(&(invoker->stack)) + 5;
+    invoker->ip = popMyStackInt(&(invoker->stack)) + 8;
 }
 
 void CALL_FUNC(Invoker* invoker)

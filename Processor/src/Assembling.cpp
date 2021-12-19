@@ -162,6 +162,9 @@ void makeASSembler(c_string rawCode, int cmdCount)
             marks.labels[marks.marksCount++] = {makeHash(cmdStruct.cmd, strlen(cmdStruct.cmd)), ip};
             cmdStruct.cmd += strlen(cmdStruct.cmd) + 1;
             compiledStr[ip++] = cmdId;
+            compiledStr[ip++] = 0;
+            compiledStr[ip++] = 0;
+            compiledStr[ip++] = 0;
             ip += 4;
             resetCmdStruct(&cmdStruct);
             continue;

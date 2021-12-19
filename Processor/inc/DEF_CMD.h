@@ -18,6 +18,7 @@ DEF_CMD(ADD, 3,
     int tmp1 = POP_STACK;
     int tmp2 = POP_STACK;
     int num = tmp1 + tmp2;
+    invoker->registers.ex = !num;
     PUSH_STACK;
     invoker->ip += 4;
 })
@@ -38,6 +39,7 @@ DEF_CMD(MUL, 5,
     int tmp1 = POP_STACK;
     int tmp2 = POP_STACK;
     int num = tmp1 * tmp2;
+    invoker->registers.ex = !num;
     PUSH_STACK;
     invoker->ip += 4;
 })
@@ -47,6 +49,7 @@ DEF_CMD(DIV, 6,
     int tmp1 = POP_STACK;
     int tmp2 = POP_STACK;
     int num = tmp1 / tmp2;
+    invoker->registers.ex = !num;
     PUSH_STACK;
     invoker->ip += 4;
 })
@@ -61,7 +64,7 @@ DEF_CMD(JGE, 8,
     if (POP_STACK >= POP_STACK)
         JMP_;
     else
-        invoker->ip += 5;
+        invoker->ip += 8;
 })
 
 DEF_CMD(JLE, 9,
@@ -69,7 +72,7 @@ DEF_CMD(JLE, 9,
     if (POP_STACK >= POP_STACK)
         JMP_;
     else
-        invoker->ip += 5;
+        invoker->ip += 8;
 })
 DEF_CMD(CALL, 10, 
 {

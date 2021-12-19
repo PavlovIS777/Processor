@@ -19,7 +19,7 @@
 #define reg        invoker->compiledCode[invoker->ip + 2]? \
                    (int*)((char*)&(invoker->registers) + ((invoker->compiledCode[invoker->ip + 2] - 1) * sizeof(int))) : nullptr \
 
-#define jmpIP      *(int*)&(invoker->compiledCode[invoker->ip + 1])
+#define jmpIP      *(int*)&(invoker->compiledCode[invoker->ip + 4])
 
 void PUSH_FUNC(Invoker* invoker);
 

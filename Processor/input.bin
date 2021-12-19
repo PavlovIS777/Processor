@@ -1,13 +1,31 @@
 IN
-PUSH 10
+POP ax
+PUSH 1
 POP bx
-PUSH 10
-    SUB
-    PUSHZ 100
-    PUSHZ 1000
-    PUSH 100
+
+CALL Factorio
+
+skipToRet:
+    PUSH bx
+    PUSH 1
     PUSH 10
-    PUSH 5
-    SUBZ
-    OUT
+    SUB
+    OUTZ
     HLT
+
+Factorio:
+    PUSH ax   
+    PUSH 0    
+
+JGE skipToRet
+
+    PUSH ax
+    PUSH bx
+    MUL
+    POP bx
+    PUSH 1
+    PUSH ax
+    SUB
+    POP ax
+
+    CALL Factorio

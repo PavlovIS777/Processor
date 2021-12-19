@@ -160,7 +160,7 @@ void makeJMP (c_string compiledStr, Marks* marks, Labels* labels)
         {
             if (marks->labels[i].hash == labels->labels[j].hash)
             {
-                memcpy(&compiledStr[marks->labels[i].ip + 1], &labels->labels[j].ip, 4);
+                memcpy(&compiledStr[marks->labels[i].ip+4], &labels->labels[j].ip, 4);
                 break;
             }
 
